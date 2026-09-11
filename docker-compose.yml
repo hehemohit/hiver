@@ -1,0 +1,42 @@
+services:
+  agent:
+
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: hiver_support_agent
+    env_file:
+      - .env
+    volumes:
+      # Optional bind-mount for reports/ if reviewer wants reports persisted
+      - ./reports:/app/reports
+    command: ["python", "demo.py", "--preset"]
+
+  interactive:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: hiver_support_agent_interactive
+    env_file:
+      - .env
+    stdin_open: true
+    tty: true
+    command: ["python", "demo.py"]
+
+  benchmark:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: hiver_support_agent_benchmark
+    env_file:
+      - .env
+    command: ["python", "evaluation/eval_metrics.py", "--limit", "30"]
+
+  test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: hiver_support_agent_test
+    env_file:
+      - .env
+    command: ["pytest", "tests/test_agent.py", "-v"]

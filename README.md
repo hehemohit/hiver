@@ -6,9 +6,33 @@ An automated, defensive AI customer support pipeline designed for **`@AppleSuppo
 
 # 🚀 Part 1: Instructor Quickstart Guide (Reproduce in < 15 Minutes)
 
-Follow these step-by-step instructions to set up, test, and evaluate the entire pipeline.
+You can run the entire pipeline in under 2 minutes using either **Docker (Recommended for zero-config evaluation)** or a **local Python virtual environment**.
 
-### Step 1: Environment Setup
+---
+
+### ⚡ Option A: One-Command Docker Run (Zero Configuration)
+
+If you have Docker installed, simply pass your Groq API key to build and run the interactive demo immediately:
+
+```bash
+# 1. Build and run the preset scenarios demonstration
+docker build -t hiver-agent .
+docker run --rm -e GROQ_API_KEY=gsk_your_key_here hiver-agent
+
+# 2. Or using docker-compose (reads directly from your .env):
+docker compose up agent
+
+# 3. Run the automated unit tests in Docker:
+docker compose run test
+
+# 4. Run the headline quantitative benchmark in Docker:
+docker compose run benchmark
+```
+
+---
+
+### 💻 Option B: Local Python Virtual Environment Setup
+
 Clone the repository and initialize a Python 3.10+ virtual environment:
 
 ```bash
@@ -26,6 +50,7 @@ Install the dependencies:
 ```bash
 pip install -r requirements.txt
 ```
+
 
 ---
 

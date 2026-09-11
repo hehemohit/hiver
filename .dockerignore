@@ -1,0 +1,25 @@
+# Git and IDE
+.git
+.gitignore
+.vscode
+.idea
+*.swp
+*.swo
+
+# Virtual Environment
+venv/
+env/
+ENV/
+
+# Python Cache
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Large Raw Data (keep image slim ~50MB, preprocessed data in data/processed & data/chroma_db is used)
+data/raw/
+*.csv
+
+# Environment Secrets (passed via docker run -e or --env-file)
+.env
