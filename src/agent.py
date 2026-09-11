@@ -7,6 +7,7 @@ import instructor
 
 from schemas import IntentEnum, RoutingDecision, SupportAgentOutput, ActionType
 from retrieval import SupportKnowledgeBase
+from security import SecurityScanner
 
 load_dotenv()
 
@@ -91,26 +92,24 @@ Apple Support: "{match['resolved_reply'][:140]}"
     """Processes an inbound tweet through ChromaDB retrieval, Groq reasoning,
     and deterministic guardrail validation.
     """
-    # Guardrail 0: Adversarial Prompt Injection Defense
-    injection_patterns = [
-        r"ignore\s+(all\s+)?(previous|prior)\s+instructions",
-        r"you\s+are\s+now\s+(a|an)?\s+dan",
-        r"dan\s+mode",
-        r"system\s*prompt",
-        r"developer\s+mode",
-    ]
-    if any(re.search(pat, customer_text.lower()) for pat in injection_patterns):
+    # Guardrail 0: Adversarial Prompt Injection & Exfiltration Defense
+    is_threat, threat_reason = SecurityScanner.scan_input(customer_text)
+    if is_threat:
       return SupportAgentOutput(
           intent=IntentEnum.OUT_OF_SCOPE,
           confidence_score=1.0,
           routing=RoutingDecision.ESCALATE,
           action_type=ActionType.DIAGNOSTIC_DM_ESCALATION,
-          escalation_reason="Security Alert: Potential prompt injection / adversarial input detected.",
-          draft_reply="Thanks for reaching out to Apple Support. For assistance with Apple devices and services, please visit support.apple.com.",
+          escalation_reason=f"Security Alert: {threat_reason}",
+          draft_reply=(
+              "Thanks for reaching out to Apple Support. For assistance with"
+              " Apple devices and services, please visit support.apple.com."
+          ),
       )
 
     # 1. Retrieve top-k nearest neighbor historical resolutions (top_k=2 saves ~45% prompt tokens)
     grounding_matches = self.kb.query_similar(customer_text, top_k=top_k)
+
 
     # 2. Assemble system instructions with retrieved demonstrations
     system_prompt = self._build_system_prompt(grounding_matches)
@@ -196,7 +195,17 @@ Apple Support: "{match['resolved_reply'][:140]}"
     ):
       result.escalation_reason = None
 
+    # Guardrail E: Output Quarantine Defense
+    is_safe, sanitized_reply = SecurityScanner.verify_output(result.draft_reply)
+    if not is_safe:
+      result.draft_reply = sanitized_reply
+      result.routing = RoutingDecision.ESCALATE
+      result.escalation_reason = (
+          "Security Alert: Generated draft quarantined due to unauthorized policy violation."
+      )
+
     return result
+
 
 
 

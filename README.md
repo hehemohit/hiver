@@ -65,11 +65,12 @@ python demo.py
 ---
 
 ### Step 4: Run Automated Unit Tests
-Run the `pytest` test suite to verify data cleaning, schemas, and deterministic safety guardrail logic:
+Run the `pytest` test suite to verify data cleaning, schemas, edge-case self-service bypass, and deterministic safety guardrails (8/8 tests):
 
 ```bash
 pytest tests/test_agent.py -v
 ```
+
 
 ---
 
@@ -118,13 +119,15 @@ This section explains the technical design, data lifecycle, reasoning layer, saf
 
 ```mermaid
 flowchart TD
-    A[Inbound Customer Tweet] --> B[ChromaDB Vector Retrieval]
+    A[Inbound Customer Tweet] --> Z{Guardrail 0: Injection Check}
+    Z -->|Adversarial Signature Detected| Safe[Safe Holding Tweet + Security Alert]
+    Z -->|Clean Inbound Query| B[ChromaDB Vector Retrieval]
     B -->|Top-2 Historical Resolutions| C[Prompt Assembler]
     A --> C
     C --> D[Groq LLM + Instructor Engine]
     D -->|Pydantic Structured Output| E{Deterministic Guardrails}
     
-    E -->|Rule 1: Policy Override| F[Forced ESCALATE for Security/Billing/Hardware]
+    E -->|Rule 1: Smart Dispatcher| F[Self-Service Link apple.co/geniusbar OR Forced DM for Diagnostics]
     E -->|Rule 2: Confidence Floor| G[Confidence < 0.70 -> ESCALATE]
     E -->|Rule 3: Char Limit Enforcer| H[Truncate strictly <= 280 chars]
     E -->|Rule 4: Reason Consistency| I[Validate escalation_reason null/str]
@@ -133,6 +136,7 @@ flowchart TD
     G --> J
     H --> J
     I --> J
+    Safe --> J
 ```
 
 ---
@@ -162,25 +166,29 @@ flowchart TD
 
 ---
 
-## 4. Agent Reasoning & The 4 Deterministic Guardrails (`src/agent.py`)
+## 4. Agent Reasoning & Deterministic Guardrails (`src/agent.py`)
 
 ### Structured Inference
 The agent wraps Groq's high-speed inference endpoint with `instructor.Mode.TOOLS`, compelling the model to return a strictly typed Pydantic object:
-* `intent` (`IntentEnum`)
+* `intent` (`IntentEnum`: 6 categories)
+* `action_type` (`ActionType`: `INFORMATIONAL_SELF_SERVICE` vs. `DIAGNOSTIC_DM_ESCALATION`)
 * `confidence_score` (`float` between $0.0$ and $1.0$)
 * `routing` (`RoutingDecision`: `AUTO_HANDLE` or `ESCALATE`)
 * `escalation_reason` (`Optional[str]`)
 * `draft_reply` (`str`, max 280 characters)
 
-### The 4 Deterministic Guardrails
+### The 5 Deterministic Guardrails
 Rather than relying solely on prompt engineering, the agent enforces hard programmatic guardrails:
-1. **Mandatory Brand Escalation Policy**:
-   If the classified intent is `Account_Security`, `Billing_Subscription`, or `Hardware_Physical`, the routing is forcibly overridden to `ESCALATE`. This ensures user credentials, refunds, and hardware repairs are **never** mishandled in public tweets.
-2. **Confidence Threshold Fallback**:
+0. **Adversarial Prompt Injection Defense (Guardrail 0)**:
+   Scans inbound tweets for jailbreaks and prompt override signatures (`ignore previous instructions`, `you are now DAN`, `developer mode`). Immediately isolates the interaction and returns a safe, pre-approved public holding response without executing untrusted instructions.
+1. **Smart Self-Service Dispatcher & Mandatory Escalation Policy (Guardrail A)**:
+   * *Smart Self-Service Dispatcher:* If a customer asks how or where to schedule an appointment (e.g. *"My screen is cracked, can I book an appointment at the Genius Bar?"*), the agent bypasses the blunt escalation hammer and directly auto-handles with the verified booking link (`apple.co/geniusbar`), deflecting the ticket at $0 human cost.
+   * *Mandatory DM Escalation:* Inquiries requiring physical repair triage, private credentials, or billing disputes are forcibly routed to `ESCALATE`.
+2. **Confidence Threshold Fallback (Guardrail B)**:
    If the model's confidence score falls below `0.70`, the query is automatically routed to `ESCALATE` with an explicit safety rationale.
-3. **Strict 280-Character Enforcer**:
+3. **Strict 280-Character Enforcer (Guardrail C)**:
    Enforces Twitter's character constraint programmatically with clean ellipsis truncation (`[:277] + "..."`).
-4. **Schema Consistency Enforcer**:
+4. **Schema Consistency Enforcer (Guardrail D)**:
    Guarantees that `escalation_reason` is populated if and only if the ticket is routed to `ESCALATE`.
 
 ---
@@ -222,6 +230,16 @@ Benchmarked against 20 human-graded interactions across Tone, Relevance, and Con
   * *"What is Misleading About My Headline Number?" (Mandatory Section)*
   * *Decision Log (12 Non-Obvious Engineering Decisions)*
   * *1-Week Future Roadmap*
+* 🛡️ **Production Edge Cases & Mitigations**: [edgecases.md](file:///c:/projects/Hiver/hiver-support-agent/edgecases.md)
+  * *Genius Bar Appointment Self-Service Bypass (Resolving the Blunt Hammer)*
+  * *Adversarial Prompt Injection & Jailbreak Defenses*
+  * *Polysemous Keyword Disambiguation ("Charge": battery vs. billing)*
+  * *Developer App Review vs. Account Lockout Disambiguation*
+  * *Wi-Fi Password vs. Apple ID Credential Disambiguation*
+* 💡 **Technical Teardown & Interview Defense Q&A**: [QNA.md](file:///c:/projects/Hiver/hiver-support-agent/QNA.md)
+  * *10 Rigorous Technical Teardown Questions with [Easy], [Medium], [Hard] difficulty ratings*
+  * *In-depth architectural solutions for RAG Hallucinations, Guardrail Fragility, Judge Bias, Concurrency Benchmarking, and Prompt Injection*
 * 📄 **Golden Set Sampling & Curation Methodology**: [data/GOLDEN_SET_METHODOLOGY.md](file:///c:/projects/Hiver/hiver-support-agent/data/GOLDEN_SET_METHODOLOGY.md)
 * 💻 **Interactive Agent Demo**: [demo.py](file:///c:/projects/Hiver/hiver-support-agent/demo.py)
-* 🧪 **Unit Test Suite**: [tests/test_agent.py](file:///c:/projects/Hiver/hiver-support-agent/tests/test_agent.py)
+* 🧪 **Unit Test Suite**: [tests/test_agent.py](file:///c:/projects/Hiver/hiver-support-agent/tests/test_agent.py) (8/8 passing tests)
+
