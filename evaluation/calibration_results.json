@@ -1,0 +1,378 @@
+{
+  "summary_metrics": [
+    {
+      "Dimension": "Empathy & Tone (1-5)",
+      "MAE": "0.65",
+      "Exact Match": "35.0%",
+      "Adjacent (+-1)": "100.0%",
+      "Pearson r": "0.782",
+      "Spearman rho": "0.560"
+    },
+    {
+      "Dimension": "Relevance & Actionability (1-5)",
+      "MAE": "0.40",
+      "Exact Match": "60.0%",
+      "Adjacent (+-1)": "100.0%",
+      "Pearson r": "0.928",
+      "Spearman rho": "0.750"
+    },
+    {
+      "Dimension": "Constraint Compliance (1-5)",
+      "MAE": "0.20",
+      "Exact Match": "90.0%",
+      "Adjacent (+-1)": "95.0%",
+      "Pearson r": "0.815",
+      "Spearman rho": "0.814"
+    },
+    {
+      "Dimension": "Overall Quality (Aggregate)",
+      "MAE": "0.42",
+      "Exact Match": "20.0%",
+      "Adjacent (+-1)": "95.0%",
+      "Pearson r": "0.908",
+      "Spearman rho": "0.642"
+    }
+  ],
+  "detailed_cases": [
+    {
+      "case_id": "calib_01",
+      "human_overall": 5.0,
+      "judge_overall": 5.0,
+      "diff": 0.0,
+      "h_scores": [
+        5,
+        5,
+        5
+      ],
+      "j_scores": [
+        5,
+        5,
+        5
+      ],
+      "judge_critique": "The reply is empathetic, actionable, and fully compliant with character limits and privacy rules."
+    },
+    {
+      "case_id": "calib_02",
+      "human_overall": 4.67,
+      "judge_overall": 4.0,
+      "diff": 0.67,
+      "h_scores": [
+        5,
+        4,
+        5
+      ],
+      "j_scores": [
+        4,
+        3,
+        5
+      ],
+      "judge_critique": "The reply is polite and within character limits but only offers generic help, lacking specific resolution for the broad complaint."
+    },
+    {
+      "case_id": "calib_03",
+      "human_overall": 4.0,
+      "judge_overall": 2.67,
+      "diff": 1.33,
+      "h_scores": [
+        4,
+        4,
+        4
+      ],
+      "j_scores": [
+        3,
+        4,
+        1
+      ],
+      "judge_critique": "The reply is polite but fails to meet privacy constraints by requesting Apple ID publicly, though it offers a clear next step for resolution."
+    },
+    {
+      "case_id": "calib_04",
+      "human_overall": 1.33,
+      "judge_overall": 1.0,
+      "diff": 0.33,
+      "h_scores": [
+        2,
+        1,
+        1
+      ],
+      "j_scores": [
+        1,
+        1,
+        1
+      ],
+      "judge_critique": "The response violates privacy policy by requesting passwords publicly, lacks empathy, and fails to provide proper troubleshooting steps."
+    },
+    {
+      "case_id": "calib_05",
+      "human_overall": 5.0,
+      "judge_overall": 4.33,
+      "diff": 0.67,
+      "h_scores": [
+        5,
+        5,
+        5
+      ],
+      "j_scores": [
+        4,
+        4,
+        5
+      ],
+      "judge_critique": "The response is empathetic, provides actionable steps, and stays within Twitter limits, justifying the high ratings."
+    },
+    {
+      "case_id": "calib_06",
+      "human_overall": 4.67,
+      "judge_overall": 4.33,
+      "diff": 0.34,
+      "h_scores": [
+        4,
+        5,
+        5
+      ],
+      "j_scores": [
+        3,
+        5,
+        5
+      ],
+      "judge_critique": "The reply meets character limits and avoids sensitive requests, but lacks empathy; it accurately addresses compatibility and offers a link."
+    },
+    {
+      "case_id": "calib_07",
+      "human_overall": 4.67,
+      "judge_overall": 4.67,
+      "diff": 0.0,
+      "h_scores": [
+        4,
+        5,
+        5
+      ],
+      "j_scores": [
+        4,
+        5,
+        5
+      ],
+      "judge_critique": "The reply meets all constraints, offers a clear troubleshooting step and escalation path, but the empathy phrasing could be slightly softer to match Apple\u2019s brand tone."
+    },
+    {
+      "case_id": "calib_08",
+      "human_overall": 4.67,
+      "judge_overall": 4.0,
+      "diff": 0.67,
+      "h_scores": [
+        4,
+        5,
+        5
+      ],
+      "j_scores": [
+        3,
+        4,
+        5
+      ],
+      "judge_critique": "The reply meets character limits and avoids sensitive requests, but lacks warmth and brand-specific empathy."
+    },
+    {
+      "case_id": "calib_09",
+      "human_overall": 4.67,
+      "judge_overall": 4.33,
+      "diff": 0.34,
+      "h_scores": [
+        4,
+        5,
+        5
+      ],
+      "j_scores": [
+        4,
+        4,
+        5
+      ],
+      "judge_critique": "The reply is calm and helpful, offers a clear restart step and escalation path, and stays within character limits without requesting sensitive data."
+    },
+    {
+      "case_id": "calib_10",
+      "human_overall": 2.0,
+      "judge_overall": 2.33,
+      "diff": 0.33,
+      "h_scores": [
+        1,
+        1,
+        4
+      ],
+      "j_scores": [
+        1,
+        1,
+        5
+      ],
+      "judge_critique": "The reply is unprofessional, lacks empathy, offers no troubleshooting, but meets character limits and privacy rules."
+    },
+    {
+      "case_id": "calib_11",
+      "human_overall": 4.67,
+      "judge_overall": 4.67,
+      "diff": 0.0,
+      "h_scores": [
+        4,
+        5,
+        5
+      ],
+      "j_scores": [
+        4,
+        5,
+        5
+      ],
+      "judge_critique": "The reply is helpful and concise, but could show more empathy; it meets all constraints and provides clear next steps."
+    },
+    {
+      "case_id": "calib_12",
+      "human_overall": 5.0,
+      "judge_overall": 4.33,
+      "diff": 0.67,
+      "h_scores": [
+        5,
+        5,
+        5
+      ],
+      "j_scores": [
+        4,
+        4,
+        5
+      ],
+      "judge_critique": "The reply is friendly and actionable but could better match Apple\u2019s calm brand voice; it meets character limits and avoids sensitive requests."
+    },
+    {
+      "case_id": "calib_13",
+      "human_overall": 4.67,
+      "judge_overall": 5.0,
+      "diff": 0.33,
+      "h_scores": [
+        4,
+        5,
+        5
+      ],
+      "j_scores": [
+        5,
+        5,
+        5
+      ],
+      "judge_critique": "The reply is friendly, actionable, and compliant with character limits, earning top scores across all categories."
+    },
+    {
+      "case_id": "calib_14",
+      "human_overall": 5.0,
+      "judge_overall": 4.67,
+      "diff": 0.33,
+      "h_scores": [
+        5,
+        5,
+        5
+      ],
+      "j_scores": [
+        4,
+        5,
+        5
+      ],
+      "judge_critique": "The reply is empathetic, actionable, and compliant, but could add a brief reassurance to reach a perfect score."
+    },
+    {
+      "case_id": "calib_15",
+      "human_overall": 3.33,
+      "judge_overall": 3.67,
+      "diff": 0.34,
+      "h_scores": [
+        3,
+        2,
+        5
+      ],
+      "j_scores": [
+        4,
+        2,
+        5
+      ],
+      "judge_critique": "The reply meets character limits and avoids sensitive requests, but lacks specific troubleshooting steps and could be more empathetic, resulting in moderate empathy and low actionability."
+    },
+    {
+      "case_id": "calib_16",
+      "human_overall": 4.67,
+      "judge_overall": 4.0,
+      "diff": 0.67,
+      "h_scores": [
+        4,
+        5,
+        5
+      ],
+      "j_scores": [
+        3,
+        4,
+        5
+      ],
+      "judge_critique": "The reply meets character limits and privacy rules, offers actionable steps, but lacks a warm apology or empathy typical of Apple\u2019s tone."
+    },
+    {
+      "case_id": "calib_17",
+      "human_overall": 4.67,
+      "judge_overall": 4.33,
+      "diff": 0.34,
+      "h_scores": [
+        4,
+        5,
+        5
+      ],
+      "j_scores": [
+        4,
+        4,
+        5
+      ],
+      "judge_critique": "The reply meets all constraints: it is concise, under 280 characters, and does not request sensitive information."
+    },
+    {
+      "case_id": "calib_18",
+      "human_overall": 4.67,
+      "judge_overall": 4.67,
+      "diff": 0.0,
+      "h_scores": [
+        4,
+        5,
+        5
+      ],
+      "j_scores": [
+        4,
+        5,
+        5
+      ],
+      "judge_critique": "The response is calm and provides clear steps, but could include more empathy toward the user's distress."
+    },
+    {
+      "case_id": "calib_19",
+      "human_overall": 4.67,
+      "judge_overall": 4.33,
+      "diff": 0.34,
+      "h_scores": [
+        4,
+        5,
+        5
+      ],
+      "j_scores": [
+        3,
+        5,
+        5
+      ],
+      "judge_critique": "The reply is concise and compliant but lacks empathy, while it accurately addresses the return policy and offers actionable next steps."
+    },
+    {
+      "case_id": "calib_20",
+      "human_overall": 5.0,
+      "judge_overall": 4.33,
+      "diff": 0.67,
+      "h_scores": [
+        5,
+        5,
+        5
+      ],
+      "j_scores": [
+        4,
+        4,
+        5
+      ],
+      "judge_critique": "The reply is concise, under 280 characters, and does not request sensitive info."
+    }
+  ]
+}

@@ -184,27 +184,51 @@ python evaluation/eval_metrics.py --limit 200
 * Routing Decision Accuracy & F1
 * Safety Recall ($\frac{\text{True Escalated}}{\text{All Gold Escalated}}$)
 
-### 2. Qualitative LLM-as-a-Judge Audit
+### 2. Qualitative LLM-as-a-Judge Audit & Calibration
 Evaluates generated replies using an automated LLM judge across three 1–5 scoring axes:
 1. **Tone & Empathy**: Professional, empathetic, calm brand voice.
 2. **Relevance & Actionability**: Technical accuracy and proper troubleshooting/DM handoff.
-3. **Constraint Compliance**: Length $< 280$ characters, no public password or sensitive credential requests.
+3. **Constraint Compliance**: Length $\le 280$ characters, no public password or sensitive credential requests.
 
 ```bash
+# Run comparative LLM-as-a-judge evaluation across baselines
 python evaluation/eval_judge_benchmark.py --limit 30
+
+# Run human-judge calibration benchmark (MAE, Pearson r, Spearman rho)
+python evaluation/judge_calibration.py
+```
+
+### 3. Automated Unit Tests
+Run the pytest test suite to verify schemas, text cleaning, and deterministic guardrail logic:
+
+```bash
+pytest tests/test_agent.py -v
 ```
 
 ---
 
-## Current Status & Roadmap
+## Deliverables & Documentation Index
 
-| Area | Status | Description |
-| :--- | :--- | :--- |
-| **Data Cleaning & Extraction** | Completed | Cleaned `@AppleSupport` dyads with DM escalation markers |
-| **Vector DB / RAG** | Completed | ChromaDB integration with ONNX embeddings |
-| **Agent Core & Guardrails** | Completed | Groq + Instructor Pydantic extraction with safety overrides |
-| **Baselines & Metrics** | Completed | Trivial and Simple baselines with statistical evaluation |
-| **LLM Judge** | Completed | Rubric-based LLM auditor for qualitative reply scoring |
-| **Interactive Demo** | In Progress | Interactive CLI / web demo (`demo.py`) |
-| **Calibration & Unit Tests** | Planned | Judge calibration testing and automated unit tests |
-| **Final Report** | In Progress | Detailed experimental findings and analysis in `reports/final_report.md` |
+* **Final Engineering & Evaluation Report**: [reports/final_report.md](file:///c:/projects/Hiver/hiver-support-agent/reports/final_report.md)
+  * *Problem Framing & What We Chose Not to Build*
+  * *Results vs. Trivial & Simple Baselines*
+  * *Empirical Human-Judge Calibration Analysis*
+  * *Top 5 Failure Modes (with Real Examples & Hypotheses)*
+  * *"What is Misleading About My Headline Number?" (Mandatory Section)*
+  * *Decision Log (12 Non-Obvious Engineering Decisions)*
+  * *1-Week Future Roadmap*
+* **Golden Set Sampling & Curation Methodology**: [data/GOLDEN_SET_METHODOLOGY.md](file:///c:/projects/Hiver/hiver-support-agent/data/GOLDEN_SET_METHODOLOGY.md)
+* **Interactive Agent Demonstration**: [demo.py](file:///c:/projects/Hiver/hiver-support-agent/demo.py) (`python demo.py --preset`)
+
+---
+
+## Deliverable Status Matrix
+
+| Deliverable (from Take-Home Brief) | Status | Artifact / Implementation |
+| :--- | :---: | :--- |
+| **1. Runnable Pipeline & Demo** | **Complete** | [demo.py](file:///c:/projects/Hiver/hiver-support-agent/demo.py), [agent.py](file:///c:/projects/Hiver/hiver-support-agent/src/agent.py), [README.md](file:///c:/projects/Hiver/hiver-support-agent/README.md) (Runs in $< 15$ min) |
+| **2. Golden Evaluation Set (200 items)** | **Complete** | [data/golden_set.jsonl](file:///c:/projects/Hiver/hiver-support-agent/data/golden_set.jsonl), [data/GOLDEN_SET_METHODOLOGY.md](file:///c:/projects/Hiver/hiver-support-agent/data/GOLDEN_SET_METHODOLOGY.md) |
+| **3. Evaluation Harness + Human-Judge Agreement** | **Complete** | [evaluation/eval_metrics.py](file:///c:/projects/Hiver/hiver-support-agent/evaluation/eval_metrics.py), [evaluation/judge_calibration.py](file:///c:/projects/Hiver/hiver-support-agent/evaluation/judge_calibration.py) ($r = 0.908$) |
+| **4. Comprehensive Report** | **Complete** | [reports/final_report.md](file:///c:/projects/Hiver/hiver-support-agent/reports/final_report.md) (All 5 mandatory sections covered) |
+| **5. Decision Log (12 Decisions)** | **Complete** | Documented in Section 8 of [reports/final_report.md](file:///c:/projects/Hiver/hiver-support-agent/reports/final_report.md) |
+

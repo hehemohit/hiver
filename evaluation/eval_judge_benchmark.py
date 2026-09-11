@@ -9,6 +9,12 @@ from tabulate import tabulate
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
+if sys.platform == "win32":
+  try:
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+  except AttributeError:
+    pass
+
 from agent import AppleSupportAgent
 from baselines import SimpleBaseline, TrivialBaseline
 from llm_judge import SupportReplyJudge

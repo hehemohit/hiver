@@ -1,5 +1,11 @@
-﻿import json, sys
+import json, sys
 from pathlib import Path
+
+if sys.platform == "win32":
+  try:
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+  except AttributeError:
+    pass
 
 sys.path.insert(0, "src")
 from agent import AppleSupportAgent

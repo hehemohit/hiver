@@ -10,6 +10,12 @@ from tabulate import tabulate
 # Ensure src/ is on sys.path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
+if sys.platform == "win32":
+  try:
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+  except AttributeError:
+    pass
+
 from agent import AppleSupportAgent
 from baselines import SimpleBaseline, TrivialBaseline
 from schemas import RoutingDecision
