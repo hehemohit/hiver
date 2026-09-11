@@ -4,65 +4,123 @@ An enterprise-grade, defensive AI customer support agent designed for **`@AppleS
 
 ---
 
-# ⚡ Recruiter Quick-Start (Zero Friction in < 60 Seconds)
+# 🚀 Quick-Start: Clone, Install, Run & Evaluate
 
-Choose whichever method fits your local environment best. All datasets and vector stores are pre-indexed out-of-the-box.
+Follow these step-by-step commands to clone the repository, install dependencies, run the interactive agent, execute tests, and run the evaluation agents.
 
-### 🌟 Path 1: Zero-Install Docker (Recommended)
-Runs on any system with Docker installed—no Python, C++ build tools, or virtual environment needed:
+### Step 1: Clone Repository & Install Dependencies
 
 ```bash
-# 1. Build and run the 5 curated support scenarios demonstration
+# 1. Clone the repository
+git clone https://github.com/hehemohit/hiver.git
+cd hiver
+
+# 2. (Recommended) Initialize and activate a Python virtual environment
+# On Windows (Command Prompt / PowerShell):
+python -m venv venv
+.\venv\Scripts\activate
+
+# On macOS / Linux:
+python3 -m venv venv
+source venv/bin/activate
+
+# 3. Install lightweight pinned dependencies
+pip install -r requirements.txt
+```
+
+---
+
+### Step 2: Configure Free Groq API Key
+
+Get a free Groq API key in 30 seconds at [console.groq.com/keys](https://console.groq.com/keys).
+
+```bash
+# Copy the template to .env
+# On Windows:
+copy .env.example .env
+
+# On macOS / Linux:
+cp .env.example .env
+```
+
+Open `.env` and add your key:
+```env
+GROQ_API_KEY=gsk_your_groq_api_key_here
+```
+
+> **💡 Recruiter Frictionless Fallback:** If you run `python demo.py` without configuring `.env`, the script will automatically detect the missing key, politely prompt you to paste it into the terminal, and save it to `.env` for you.
+
+---
+
+### Step 3: Running the Support Agent (Demonstrations & Interactive CLI)
+
+Use these commands to run and inspect the agent across different operational modes:
+
+| Command | Operational Purpose & Expected Behavior |
+| :--- | :--- |
+| `python demo.py` | **Primary Interactive Hub:** Launches the main recruiter CLI with an interactive 5-option menu (presets, edge cases, custom tweets, unit tests, exit). |
+| `python demo.py --preset` | **Standard Support Scenarios:** Processes 5 diverse customer tweets across the intent spectrum (Hardware, Billing, Account Security, Software Glitch, Brand Rant). |
+| `python demo.py --edgecases` | **Production Edge Cases & Defenses:** Demonstrates the 5 key architectural mitigations (Genius Bar self-service booking bypass, DAN jailbreak prompt injection defense, prompt exfiltration quarantine, and polysemous *"charge"* disambiguation). |
+| `python demo.py --interactive` | **Interactive Prompt Mode:** Opens an interactive prompt where you can type any arbitrary customer tweet and view ChromaDB Top-2 matches, classification, confidence score, routing decision, and 280-character drafted reply in real time. |
+| `run_demo.bat` | **Windows 1-Click Launch:** (Windows only) Double-click to auto-detect the virtualenv, run `demo.py`, and keep the terminal window open. |
+
+---
+
+### Step 4: Running Automated Unit & Safety Tests
+
+Verify system integrity, Pydantic schemas, tweet data cleaning, and deterministic security guardrails:
+
+| Command | Operational Purpose & Expected Behavior |
+| :--- | :--- |
+| `pytest tests/test_agent.py -v` | **Automated Unit Test Suite:** Runs all 8 pytest test cases (data cleaning, ID sanitization, DM cue regex, schema validation, confidence floor, Genius Bar URL bypass, and multi-vector security scanner). **Passes 8/8 in < 1.5s.** |
+| `python demo.py --test` | **CLI Test Runner:** Triggers the complete pytest test suite directly from within the `demo.py` runner. |
+
+---
+
+### Step 5: Running the Evaluation Agents & Quantitative Benchmarks
+
+The `evaluation/` directory contains automated evaluation harnesses to benchmark the agent against baselines and calibrate the LLM-as-a-judge against human ground truth:
+
+| Command | Evaluation Agent & Purpose | Metrics & Output Produced |
+| :--- | :--- | :--- |
+| `python evaluation/eval_metrics.py --limit 30` | **Fast Quantitative Benchmark (< 2 mins):** Evaluates the Production Agent vs. Trivial and Simple Baselines on 30 golden set samples. | Outputs comparison table with **Intent Macro-F1, Escalation Precision/Recall, Safety Recall**, and Routing Accuracy. |
+| `python evaluation/eval_metrics.py --limit 200` | **Full Golden Set Benchmark (~7 mins):** Evaluates across the entire 200-sample curated golden set. | Outputs complete headline table matching the [Final Engineering Report](file:///c:/projects/Hiver/hiver-support-agent/reports/final_report.md) (**89.5% Intent Acc, 97.8% Safety Recall**). |
+| `python evaluation/judge_calibration.py` | **Human-Judge Calibration Agent:** Evaluates the automated LLM judge (`openai/gpt-oss-20b`) against 20 verified human ratings. | Computes **Mean Absolute Error (MAE: 0.42), Exact Match %, Adjacent Match % (95.0%), Pearson correlation ($r = 0.908$)**, and **Cohen’s Kappa ($\kappa \approx 0.720$)**. |
+| `python evaluation/eval_judge_benchmark.py --limit 15` | **Qualitative Response Quality Judge:** Evaluates generated response quality across systems using LLM-as-a-judge. | Scores candidate drafts on 1–5 rubrics for **Tone & Empathy (4.75/5), Relevance & Actionability (4.70/5), and Constraint Compliance (4.95/5)**. |
+| `python evaluation/diagnose.py` | **Golden Set Disagreement Diagnostic Tool:** Inspects predictions side-by-side with gold labels on sample interactions. | Prints sample customer tweet, gold intent/routing vs. agent prediction, confidence score, and operational escalation rationale. |
+
+---
+
+### Alternative: Zero-Install Docker Run (No Local Python / C++ Needed)
+
+If you prefer to run inside an isolated container without installing Python locally:
+
+```bash
+# 1. Run the 5 preset support scenarios demonstration
 docker compose run --rm agent
 
-# 2. Launch the full interactive CLI (preset, edge cases, custom tweets, test suite)
+# 2. Launch the full interactive CLI (presets, edge cases, live tweets, tests)
 docker compose run --rm interactive
 
 # 3. Run the automated unit test suite (8/8 passing tests)
 docker compose run --rm test
 
-# 4. Run the quantitative benchmark on 30 golden set cases (< 2 mins)
+# 4. Run the quantitative evaluation benchmark on 30 cases
 docker compose run --rm benchmark
 ```
-*(Note: If you have not created a `.env` file, pass your key via `-e GROQ_API_KEY=gsk_...`)*
 
 ---
 
-### 🪟 Path 2: Windows 1-Click Launch
-On Windows, simply double-click:
-```bat
-run_demo.bat
-```
-This batch script auto-detects your Python environment, launches `demo.py`, and keeps the window open for easy reading.
+### Alternative: Linux / macOS `make` Automation
 
----
-
-### 🍎 / 🐧 Path 3: macOS / Linux (`make`)
-Using the included `Makefile`:
 ```bash
-# Setup virtual environment & dependencies
-make setup
-
-# Run interactive agent demo
-make demo
-
-# Run 5 production edge cases & prompt injection defenses directly
-make edgecases
-
-# Run test suite
-make test
+make setup       # Create venv, install requirements, and create .env
+make demo        # Launch interactive demo
+make edgecases   # Run 5 edge cases and prompt injection defenses
+make test        # Run unit tests (pytest)
+make eval        # Run quantitative evaluation benchmark
+make docker-demo # Run preset demo in Docker
 ```
-
----
-
-### 🔑 API Key Setup Made Frictionless
-* **Free Groq API Key**: Get a 100% free key in 30 seconds at [console.groq.com/keys](https://console.groq.com/keys).
-* **Built-in Auto-Configuration**: If you run `python demo.py` without setting up a `.env` file first, the CLI will automatically detect the missing key, politely prompt you to paste it, and save it to `.env` for you.
-* Alternatively, copy `.env.example` to `.env`:
-  ```bash
-  cp .env.example .env    # Linux / macOS
-  copy .env.example .env  # Windows
-  ```
 
 ---
 
