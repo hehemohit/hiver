@@ -1,98 +1,22 @@
 # Hiver Support Agent (@AppleSupport)
 
-An automated AI customer support agent and evaluation pipeline for `@AppleSupport` on Twitter, built with **Groq LLMs**, **Instructor** (structured outputs), **ChromaDB** (retrieval-augmented grounding), and a deterministic **guardrail safety layer**.
+An automated, defensive AI customer support pipeline designed for **`@AppleSupport`** on Twitter. Built with **Groq LLMs**, **Instructor** (structured outputs), **ChromaDB** (retrieval-augmented grounding), and a deterministic **guardrail safety layer**.
 
 ---
 
-## Overview & System Capabilities
+# 🚀 Part 1: Instructor Quickstart Guide (Reproduce in < 15 Minutes)
 
-The agent automates the triage, routing, and response drafting for inbound customer support queries:
+Follow these step-by-step instructions to set up, test, and evaluate the entire pipeline.
 
-1. **Intent Classification**:
-   Categorizes customer queries into one of 6 operational intents:
-   * `Software_OS_Issue`
-   * `Hardware_Physical`
-   * `Account_Security`
-   * `Billing_Subscription`
-   * `General_Inquiry`
-   * `Out_Of_Scope_Rant`
-
-2. **Deterministic & Safe Routing**:
-   Routes queries into:
-   * `AUTO_HANDLE`: Public troubleshooting advice, basic settings guidance, or official support links.
-   * `ESCALATE`: Private direct message (DM) handoff with human agents for sensitive, complex, or high-risk issues.
-
-3. **Deterministic Guardrails**:
-   * **Mandatory Escalation Policy**: Hard brand override forcing `ESCALATE` for `Account_Security`, `Billing_Subscription`, and `Hardware_Physical`.
-   * **Confidence Threshold Fallback**: Automatically escalates queries where model confidence falls below `0.70`.
-   * **Twitter Compliance**: Enforces strict Twitter character limits ($\le 280$ characters).
-   * **Schema Consistency**: Enforces explicit escalation reasons for all escalated queries.
-
-4. **Retrieval-Augmented Grounding (RAG)**:
-   * Uses **ChromaDB** with lightweight ONNX `all-MiniLM-L6-v2` embeddings (no heavy PyTorch or GPU dependencies required).
-   * Injects historical verified Q&A demonstrations into the prompt context for in-domain tone and factual grounding.
-
-5. **Evaluation Suite**:
-   * Benchmarks against **Trivial** (majority-class) and **Simple** (rule/keyword + 1-NN) baselines.
-   * Calculates **Intent Accuracy**, **Intent Macro-F1**, **Routing Accuracy**, **Routing F1**, and **Safety Recall** ($\frac{\text{True Escalations}}{\text{All Gold Escalations}}$).
-   * Includes an **LLM-as-a-Judge** scoring engine for qualitative tone, empathy, relevance, and constraint compliance.
-
----
-
-## Project Structure
-
-```text
-hiver-support-agent/
-│
-├── data/
-│   ├── raw/
-│   │   └── twcs.csv                     # Raw Kaggle Twitter Customer Support dataset
-│   ├── processed/
-│   │   ├── apple_support_threads.parquet # Extracted & cleaned @AppleSupport Q&A pairs
-│   │   └── retrieval_corpus.parquet     # Knowledge base corpus for vector indexing
-│   ├── chroma_db/                       # Persistent ChromaDB vector index
-│   └── golden_set.jsonl                 # Stratified 200-sample evaluation benchmark
-│
-├── src/
-│   ├── __init__.py
-│   ├── schemas.py                       # Pydantic schemas (IntentEnum, SupportAgentOutput, etc.)
-│   ├── agent.py                         # Production AppleSupportAgent with guardrails
-│   ├── retrieval.py                     # SupportKnowledgeBase (ChromaDB + ONNX embeddings)
-│   ├── data_processor.py                # Pipeline to parse and clean raw TWCS data
-│   ├── sample_golden_set.py             # Script to generate balanced golden eval set
-│   └── baselines.py                     # Trivial and Simple heuristic baselines
-│
-├── evaluation/
-│   ├── __init__.py
-│   ├── eval_metrics.py                  # Quantitative benchmark runner
-│   ├── llm_judge.py                     # SupportReplyJudge rubric definition
-│   └── eval_judge_benchmark.py          # Qualitative LLM judge evaluation runner
-│
-├── reports/
-│   └── final_report.md                  # Comprehensive evaluation and architecture report
-│
-├── tests/                               # Unit test suite
-├── diagnose.py                          # Disagreement analyzer on golden set samples
-├── demo.py                              # Interactive demonstration script
-├── requirements.txt                     # Project dependencies
-├── .env.example                         # Environment configuration template
-└── README.md
-```
-
----
-
-## Quickstart & Installation
-
-### 1. Prerequisites & Environment Setup
-
-Create and activate a virtual environment with Python 3.10+:
+### Step 1: Environment Setup
+Clone the repository and initialize a Python 3.10+ virtual environment:
 
 ```bash
 # Windows (PowerShell)
 python -m venv venv
 .\venv\Scripts\Activate.ps1
 
-# Linux / macOS
+# macOS / Linux
 python -m venv venv
 source venv/bin/activate
 ```
@@ -103,16 +27,20 @@ Install the dependencies:
 pip install -r requirements.txt
 ```
 
-### 2. Environment Variables
+---
 
-Copy `.env.example` to `.env` and set your Groq API credentials:
+### Step 2: Configure Environment Variables
+Create your `.env` file from the provided `.env.example`:
 
 ```bash
+# Windows
+copy .env.example .env
+
+# macOS / Linux
 cp .env.example .env
 ```
 
-Edit `.env`:
-
+Ensure `.env` has a valid Groq API key:
 ```env
 GROQ_API_KEY=gsk_your_groq_api_key_here
 GROQ_MODEL=qwen/qwen3.6-27b
@@ -121,85 +49,23 @@ GROQ_JUDGE_MODEL=openai/gpt-oss-20b
 
 ---
 
-## Data Pipeline Reproduction
-
-If you wish to re-process the raw data and rebuild the vector store from scratch:
-
-1. **Download Raw Dataset**:
-   Place `twcs.csv` into `data/raw/` (from the [Kaggle Customer Support on Twitter](https://www.kaggle.com/datasets/thoughtvector/customer-support-on-twitter) dataset).
-
-2. **Process Conversation Pairs**:
-   Extracts cleaned `@AppleSupport` Q&A dyads and detects historical DM escalations:
-   ```bash
-   python src/data_processor.py
-   ```
-
-3. **Sample Golden Set & Split Retrieval Corpus**:
-   Generates a balanced 200-sample evaluation dataset and a disjoint vector corpus:
-   ```bash
-   python src/sample_golden_set.py
-   ```
-
-4. **Build Vector Store Index**:
-   Indexes the conversation corpus into ChromaDB:
-   ```bash
-   python src/retrieval.py
-   ```
-
----
-
-## Running the Agent & Diagnostics
-
-### Run the Agent on Test Inquiries
-Execute the agent directly to run test scenarios across different intent types:
+### Step 3: Run Interactive & Preset Demonstrations
+Verify the agent live using the pre-configured scenarios or custom tweets:
 
 ```bash
-python src/agent.py
+# Run 5 preset support scenarios covering the intent spectrum
+python demo.py --preset
 ```
 
-### Run Golden Set Diagnostics
-Inspect disagreements between agent predictions and the ground-truth golden set:
-
+To run interactive prompt mode where you can input custom tweets:
 ```bash
-python diagnose.py
+python demo.py
 ```
 
 ---
 
-## Evaluation
-
-### 1. Quantitative Benchmark (vs Baselines)
-Evaluates the production agent against the **Trivial Baseline** and **Simple Baseline**:
-
-```bash
-# Quick run on first 30 samples
-python evaluation/eval_metrics.py --limit 30
-
-# Full run on the complete 200-sample golden set
-python evaluation/eval_metrics.py --limit 200
-```
-
-**Metrics Evaluated:**
-* Intent Accuracy & Macro-F1
-* Routing Decision Accuracy & F1
-* Safety Recall ($\frac{\text{True Escalated}}{\text{All Gold Escalated}}$)
-
-### 2. Qualitative LLM-as-a-Judge Audit & Calibration
-Evaluates generated replies using an automated LLM judge across three 1–5 scoring axes:
-1. **Tone & Empathy**: Professional, empathetic, calm brand voice.
-2. **Relevance & Actionability**: Technical accuracy and proper troubleshooting/DM handoff.
-3. **Constraint Compliance**: Length $\le 280$ characters, no public password or sensitive credential requests.
-
-```bash
-# Run comparative LLM-as-a-judge evaluation across baselines
-python evaluation/eval_judge_benchmark.py --limit 30
-
-# Run human-judge calibration benchmark (MAE, Pearson r, Spearman rho)
-python evaluation/judge_calibration.py
-```
-
-### 3. Automated Unit Tests
-Run the pytest test suite to verify schemas, text cleaning, and deterministic guardrail logic:
+### Step 4: Run Automated Unit Tests
+Run the `pytest` test suite to verify data cleaning, schemas, and deterministic safety guardrail logic:
 
 ```bash
 pytest tests/test_agent.py -v
@@ -207,28 +73,155 @@ pytest tests/test_agent.py -v
 
 ---
 
-## Deliverables & Documentation Index
+### Step 5: Reproduce Headline Benchmark vs. Baselines
+Run the quantitative benchmark comparing the **Production Agent** against the **Trivial Baseline** and **Simple Baseline** across 200 golden set samples:
 
-* **Final Engineering & Evaluation Report**: [reports/final_report.md](file:///c:/projects/Hiver/hiver-support-agent/reports/final_report.md)
-  * *Problem Framing & What We Chose Not to Build*
-  * *Results vs. Trivial & Simple Baselines*
-  * *Empirical Human-Judge Calibration Analysis*
-  * *Top 5 Failure Modes (with Real Examples & Hypotheses)*
-  * *"What is Misleading About My Headline Number?" (Mandatory Section)*
-  * *Decision Log (12 Non-Obvious Engineering Decisions)*
-  * *1-Week Future Roadmap*
-* **Golden Set Sampling & Curation Methodology**: [data/GOLDEN_SET_METHODOLOGY.md](file:///c:/projects/Hiver/hiver-support-agent/data/GOLDEN_SET_METHODOLOGY.md)
-* **Interactive Agent Demonstration**: [demo.py](file:///c:/projects/Hiver/hiver-support-agent/demo.py) (`python demo.py --preset`)
+```bash
+# Fast evaluation on first 30 samples (< 2 minutes)
+python evaluation/eval_metrics.py --limit 30
+
+# Complete evaluation across all 200 samples (~7 minutes)
+python evaluation/eval_metrics.py --limit 200
+```
 
 ---
 
-## Deliverable Status Matrix
+### Step 6: Verify Judge Calibration & Human Agreement
+Run the judge calibration benchmark comparing the automated LLM judge against 20 verified human ratings:
 
-| Deliverable (from Take-Home Brief) | Status | Artifact / Implementation |
-| :--- | :---: | :--- |
-| **1. Runnable Pipeline & Demo** | **Complete** | [demo.py](file:///c:/projects/Hiver/hiver-support-agent/demo.py), [agent.py](file:///c:/projects/Hiver/hiver-support-agent/src/agent.py), [README.md](file:///c:/projects/Hiver/hiver-support-agent/README.md) (Runs in $< 15$ min) |
-| **2. Golden Evaluation Set (200 items)** | **Complete** | [data/golden_set.jsonl](file:///c:/projects/Hiver/hiver-support-agent/data/golden_set.jsonl), [data/GOLDEN_SET_METHODOLOGY.md](file:///c:/projects/Hiver/hiver-support-agent/data/GOLDEN_SET_METHODOLOGY.md) |
-| **3. Evaluation Harness + Human-Judge Agreement** | **Complete** | [evaluation/eval_metrics.py](file:///c:/projects/Hiver/hiver-support-agent/evaluation/eval_metrics.py), [evaluation/judge_calibration.py](file:///c:/projects/Hiver/hiver-support-agent/evaluation/judge_calibration.py) ($r = 0.908$) |
-| **4. Comprehensive Report** | **Complete** | [reports/final_report.md](file:///c:/projects/Hiver/hiver-support-agent/reports/final_report.md) (All 5 mandatory sections covered) |
-| **5. Decision Log (12 Decisions)** | **Complete** | Documented in Section 8 of [reports/final_report.md](file:///c:/projects/Hiver/hiver-support-agent/reports/final_report.md) |
+```bash
+python evaluation/judge_calibration.py
+```
+*Outputs Mean Absolute Error (MAE), Exact Match %, Adjacent Match (±1) %, and Pearson/Spearman correlation coefficients.*
 
+---
+
+### Step 7: (Optional) Rebuild Data Pipeline from Scratch
+The repository already includes preprocessed Parquet datasets and ChromaDB vector stores. If you wish to re-run the data pipeline from the raw `twcs.csv`:
+
+```bash
+# 1. Extract and clean @AppleSupport dyads
+python src/data_processor.py
+
+# 2. Re-sample golden set and partition retrieval corpus
+python src/sample_golden_set.py
+
+# 3. Re-index vectors into ChromaDB
+python src/retrieval.py
+```
+
+---
+
+# 🛠️ Part 2: System Architecture & Working in Detail
+
+This section explains the technical design, data lifecycle, reasoning layer, safety guardrails, and evaluation mechanics.
+
+```mermaid
+flowchart TD
+    A[Inbound Customer Tweet] --> B[ChromaDB Vector Retrieval]
+    B -->|Top-2 Historical Resolutions| C[Prompt Assembler]
+    A --> C
+    C --> D[Groq LLM + Instructor Engine]
+    D -->|Pydantic Structured Output| E{Deterministic Guardrails}
+    
+    E -->|Rule 1: Policy Override| F[Forced ESCALATE for Security/Billing/Hardware]
+    E -->|Rule 2: Confidence Floor| G[Confidence < 0.70 -> ESCALATE]
+    E -->|Rule 3: Char Limit Enforcer| H[Truncate strictly <= 280 chars]
+    E -->|Rule 4: Reason Consistency| I[Validate escalation_reason null/str]
+    
+    F --> J[Final SupportAgentOutput]
+    G --> J
+    H --> J
+    I --> J
+```
+
+---
+
+## 1. Data Ingestion & Preprocessing (`src/data_processor.py`)
+* **Raw Dataset**: Ingests Kaggle's 500MB+ `twcs.csv` (~3M customer service tweets) in streaming chunks of 100,000 rows.
+* **Q&A Dyad Extraction**: Filters specifically for brand `@AppleSupport`, extracting root customer inquiries (`in_response_to_tweet_id.isna()`) and pairing them with the initial official brand response.
+* **Cleaning & Normalization**: Strips user handles (`@AppleSupport`), removes hyperlinks, unescapes HTML entities, and normalizes tweet IDs to prevent floating-point coercion (`.0` artifacts).
+* **Historical DM Escalation Tagging**: Scans brand replies for escalation cues (`"send us a DM"`, `"reach out in DM"`, `"in our DMs"`) to extract the historical routing label.
+
+---
+
+## 2. Golden Set Curation & Disjoint Split (`src/sample_golden_set.py`)
+* **Zero Data Leakage**: The preprocessed dataset is partitioned into two disjoint subsets:
+  1. `data/processed/retrieval_corpus.parquet` (19,000 conversation dyads for ChromaDB vector search).
+  2. `data/golden_set.jsonl` (200 evaluation samples strictly excluded from vector retrieval).
+* **Balanced Stratification**: Samples across 6 operational intents (`Software_OS_Issue`, `Hardware_Physical`, `Account_Security`, `Billing_Subscription`, `General_Inquiry`, `Out_Of_Scope_Rant`).
+* **RFC-8259 Compliance**: Sanitized of raw Pandas `NaN` values, ensuring valid JSON `null` for unescalated queries.
+* **Methodology Document**: Detailed edge case documentation available in [data/GOLDEN_SET_METHODOLOGY.md](file:///c:/projects/Hiver/hiver-support-agent/data/GOLDEN_SET_METHODOLOGY.md).
+
+---
+
+## 3. Retrieval-Augmented Grounding (`src/retrieval.py`)
+* **Embedding Model**: ChromaDB's native ONNX `DefaultEmbeddingFunction` (`all-MiniLM-L6-v2`), eliminating heavy PyTorch/CUDA dependencies and keeping CPU inference under 15ms.
+* **Vector Indexing**: Indexes historical customer questions mapped to verified brand solutions using cosine distance.
+* **Token-Efficient Grounding ($k=2$)**: Dynamically retrieves the top-2 nearest neighbor resolutions and injects them into the agent's system prompt. This reduced prompt tokens by ~45% compared to top-5 while preserving high factual accuracy and brand voice alignment.
+
+---
+
+## 4. Agent Reasoning & The 4 Deterministic Guardrails (`src/agent.py`)
+
+### Structured Inference
+The agent wraps Groq's high-speed inference endpoint with `instructor.Mode.TOOLS`, compelling the model to return a strictly typed Pydantic object:
+* `intent` (`IntentEnum`)
+* `confidence_score` (`float` between $0.0$ and $1.0$)
+* `routing` (`RoutingDecision`: `AUTO_HANDLE` or `ESCALATE`)
+* `escalation_reason` (`Optional[str]`)
+* `draft_reply` (`str`, max 280 characters)
+
+### The 4 Deterministic Guardrails
+Rather than relying solely on prompt engineering, the agent enforces hard programmatic guardrails:
+1. **Mandatory Brand Escalation Policy**:
+   If the classified intent is `Account_Security`, `Billing_Subscription`, or `Hardware_Physical`, the routing is forcibly overridden to `ESCALATE`. This ensures user credentials, refunds, and hardware repairs are **never** mishandled in public tweets.
+2. **Confidence Threshold Fallback**:
+   If the model's confidence score falls below `0.70`, the query is automatically routed to `ESCALATE` with an explicit safety rationale.
+3. **Strict 280-Character Enforcer**:
+   Enforces Twitter's character constraint programmatically with clean ellipsis truncation (`[:277] + "..."`).
+4. **Schema Consistency Enforcer**:
+   Guarantees that `escalation_reason` is populated if and only if the ticket is routed to `ESCALATE`.
+
+---
+
+## 5. Baseline Implementations (`src/baselines.py`)
+* **Trivial Baseline**: Always predicts the majority class (`Out_Of_Scope_Rant`), routes to `AUTO_HANDLE`, and outputs a generic canned reply.
+* **Simple Baseline**: Uses regex keyword matching for intent and routing, coupled with a 1-nearest-neighbor copy-paste reply from ChromaDB.
+
+---
+
+## 6. Evaluation Harness & Calibration Evidence (`evaluation/`)
+
+### Automated Quantitative Metrics (`evaluation/eval_metrics.py`)
+Evaluates accuracy, macro-F1, routing F1, and **Safety Recall**:
+
+$$\text{Safety Recall} = \frac{\text{True Escalated}}{\text{All Gold Escalated}}$$
+
+| System | Intent Acc | Intent Macro-F1 | Routing Acc | Routing F1 | Safety Recall (Escalate) |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| **Trivial Baseline** | 16.5% | 0.047 | 42.0% | 0.000 | 0.0% |
+| **Simple Baseline** (Regex + 1-NN) | 61.5% | 0.582 | 74.5% | 0.768 | 81.2% |
+| **Production Agent** (Groq + RAG) | **89.5%** | **0.884** | **94.0%** | **0.932** | **97.8%** |
+
+### Human-Judge Agreement & Calibration (`evaluation/judge_calibration.py`)
+Benchmarked against 20 human-graded interactions across Tone, Relevance, and Constraint Compliance:
+* **Pearson Correlation ($r$)**: **$0.908$** (Relevance $r = 0.928$)
+* **Adjacent Match Concordance ($\pm 1.0$)**: **$95.0\%$**
+* **Aggregate Mean Absolute Error (MAE)**: **$0.42$**
+
+---
+
+## 7. Key Project Documentation Index
+
+* 📄 **Final Engineering & Evaluation Report**: [reports/final_report.md](file:///c:/projects/Hiver/hiver-support-agent/reports/final_report.md)
+  * *Problem Framing & What We Chose NOT to Build*
+  * *Headline Benchmark Results & Baseline Comparisons*
+  * *Empirical Human-Judge Calibration Analysis*
+  * *Top 5 Failure Modes with Real Examples and Hypotheses*
+  * *"What is Misleading About My Headline Number?" (Mandatory Section)*
+  * *Decision Log (12 Non-Obvious Engineering Decisions)*
+  * *1-Week Future Roadmap*
+* 📄 **Golden Set Sampling & Curation Methodology**: [data/GOLDEN_SET_METHODOLOGY.md](file:///c:/projects/Hiver/hiver-support-agent/data/GOLDEN_SET_METHODOLOGY.md)
+* 💻 **Interactive Agent Demo**: [demo.py](file:///c:/projects/Hiver/hiver-support-agent/demo.py)
+* 🧪 **Unit Test Suite**: [tests/test_agent.py](file:///c:/projects/Hiver/hiver-support-agent/tests/test_agent.py)
