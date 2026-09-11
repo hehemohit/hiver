@@ -1,14 +1,16 @@
 services:
   agent:
-
     build:
       context: .
       dockerfile: Dockerfile
     container_name: hiver_support_agent
     env_file:
-      - .env
+      - path: .env
+        required: false
+    environment:
+      - GROQ_API_KEY=${GROQ_API_KEY:-}
+      - GROQ_MODEL=${GROQ_MODEL:-}
     volumes:
-      # Optional bind-mount for reports/ if reviewer wants reports persisted
       - ./reports:/app/reports
     command: ["python", "demo.py", "--preset"]
 
@@ -18,7 +20,11 @@ services:
       dockerfile: Dockerfile
     container_name: hiver_support_agent_interactive
     env_file:
-      - .env
+      - path: .env
+        required: false
+    environment:
+      - GROQ_API_KEY=${GROQ_API_KEY:-}
+      - GROQ_MODEL=${GROQ_MODEL:-}
     stdin_open: true
     tty: true
     command: ["python", "demo.py"]
@@ -29,7 +35,11 @@ services:
       dockerfile: Dockerfile
     container_name: hiver_support_agent_benchmark
     env_file:
-      - .env
+      - path: .env
+        required: false
+    environment:
+      - GROQ_API_KEY=${GROQ_API_KEY:-}
+      - GROQ_MODEL=${GROQ_MODEL:-}
     command: ["python", "evaluation/eval_metrics.py", "--limit", "30"]
 
   test:
@@ -38,5 +48,10 @@ services:
       dockerfile: Dockerfile
     container_name: hiver_support_agent_test
     env_file:
-      - .env
+      - path: .env
+        required: false
+    environment:
+      - GROQ_API_KEY=${GROQ_API_KEY:-}
+      - GROQ_MODEL=${GROQ_MODEL:-}
     command: ["pytest", "tests/test_agent.py", "-v"]
+

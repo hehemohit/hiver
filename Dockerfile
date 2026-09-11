@@ -29,7 +29,6 @@ COPY data/GOLDEN_SET_METHODOLOGY.md ./data/GOLDEN_SET_METHODOLOGY.md
 COPY tests/ ./tests/
 COPY reports/ ./reports/
 COPY demo.py .
-COPY diagnose.py .
 COPY edgecases.md .
 COPY QNA.md .
 COPY README.md .
