@@ -17,6 +17,11 @@ class RoutingDecision(str, Enum):
     ESCALATE = "ESCALATE"
 
 
+class ActionType(str, Enum):
+    DIAGNOSTIC_DM_ESCALATION = "DIAGNOSTIC_DM_ESCALATION"
+    INFORMATIONAL_SELF_SERVICE = "INFORMATIONAL_SELF_SERVICE"
+
+
 class SupportAgentOutput(BaseModel):
     intent: IntentEnum = Field(description="Classified customer intent")
     confidence_score: float = Field(
@@ -24,6 +29,10 @@ class SupportAgentOutput(BaseModel):
     )
     routing: RoutingDecision = Field(
         description="Routing outcome: AUTO_HANDLE or ESCALATE"
+    )
+    action_type: ActionType = Field(
+        default=ActionType.DIAGNOSTIC_DM_ESCALATION,
+        description="Action outcome: DIAGNOSTIC_DM_ESCALATION or INFORMATIONAL_SELF_SERVICE",
     )
     escalation_reason: Optional[str] = Field(
         default=None,

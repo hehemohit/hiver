@@ -1,10 +1,11 @@
 import os
+import re
 from pathlib import Path
 from dotenv import load_dotenv
 from openai import OpenAI
 import instructor
 
-from schemas import IntentEnum, RoutingDecision, SupportAgentOutput
+from schemas import IntentEnum, RoutingDecision, SupportAgentOutput, ActionType
 from retrieval import SupportKnowledgeBase
 
 load_dotenv()
@@ -60,9 +61,9 @@ Your task is to analyze an incoming customer tweet and return a structured JSON 
    - General_Inquiry: Trade-in policies, device compatibility, public release dates, Apple Store retail policies.
    - Out_Of_Scope_Rant: Brand venting, non-actionable insults, subjective complaints with no specific technical bug.
 
-2. Routing Decision:
-   - ESCALATE: Any query requiring private DM interaction (account security, billing/refunds, hardware repair, or complex diagnostics).
-   - AUTO_HANDLE: Public troubleshooting advice, basic device setting guidance, or public documentation links.
+2. Action Type & Routing Decision:
+   - INFORMATIONAL_SELF_SERVICE: If the user is asking where/how to book an appointment (e.g. Genius Bar reservation, store hours, trade-in links, or public documentation), route as AUTO_HANDLE with verified links (e.g. apple.co/geniusbar).
+   - DIAGNOSTIC_DM_ESCALATION: Any query requiring private diagnostic triage, serial numbers, account unlock, billing refunds, or hardware inspection -> route as ESCALATE to DM.
    - escalation_reason: Required if ESCALATE; must be null/None if AUTO_HANDLE.
 
 3. Draft Reply:
@@ -88,9 +89,26 @@ Apple Support: "{match['resolved_reply'][:140]}"
       self, customer_text: str, top_k: int = 2
   ) -> SupportAgentOutput:
     """Processes an inbound tweet through ChromaDB retrieval, Groq reasoning,
-
     and deterministic guardrail validation.
     """
+    # Guardrail 0: Adversarial Prompt Injection Defense
+    injection_patterns = [
+        r"ignore\s+(all\s+)?(previous|prior)\s+instructions",
+        r"you\s+are\s+now\s+(a|an)?\s+dan",
+        r"dan\s+mode",
+        r"system\s*prompt",
+        r"developer\s+mode",
+    ]
+    if any(re.search(pat, customer_text.lower()) for pat in injection_patterns):
+      return SupportAgentOutput(
+          intent=IntentEnum.OUT_OF_SCOPE,
+          confidence_score=1.0,
+          routing=RoutingDecision.ESCALATE,
+          action_type=ActionType.DIAGNOSTIC_DM_ESCALATION,
+          escalation_reason="Security Alert: Potential prompt injection / adversarial input detected.",
+          draft_reply="Thanks for reaching out to Apple Support. For assistance with Apple devices and services, please visit support.apple.com.",
+      )
+
     # 1. Retrieve top-k nearest neighbor historical resolutions (top_k=2 saves ~45% prompt tokens)
     grounding_matches = self.kb.query_similar(customer_text, top_k=top_k)
 
@@ -113,22 +131,43 @@ Apple Support: "{match['resolved_reply'][:140]}"
 
     # 4. Deterministic Guardrail Layer
 
-    # Guardrail A: Mandatory Escalation Policy
-    # Brand security policy mandates DM escalation for account locks, billing disputes, and hardware repairs
-    mandatory_escalate_intents = {
-        IntentEnum.ACCOUNT_SECURITY,
-        IntentEnum.BILLING_SUBSCRIPTION,
-        IntentEnum.HARDWARE_PHYSICAL,
-    }
-    if (
-        result.intent in mandatory_escalate_intents
-        and result.routing != RoutingDecision.ESCALATE
-    ):
-      result.routing = RoutingDecision.ESCALATE
-      result.escalation_reason = (
-          f"Brand Policy Override: {result.intent.value} requires secure DM"
-          " routing."
-      )
+    # Guardrail A: Smart Action Dispatcher & Mandatory Escalation Policy
+    # Check if this is an informational self-service request (e.g. Genius Bar reservation, appointment booking)
+    is_booking_faq = bool(
+        re.search(
+            r"(book|schedule|make|set up|need)\s+(an?\s+)?(appointment|reservation|slot)|genius bar (appointment|reservation|link|booking)|where can i (repair|fix|book)",
+            customer_text.lower(),
+        )
+    )
+
+    if is_booking_faq:
+      # Bypass blunt DM escalation and provide immediate self-service reservation link
+      result.action_type = ActionType.INFORMATIONAL_SELF_SERVICE
+      result.routing = RoutingDecision.AUTO_HANDLE
+      result.escalation_reason = None
+      if "apple.co/geniusbar" not in result.draft_reply and "getsupport.apple.com" not in result.draft_reply:
+        result.draft_reply = (
+            "We're sorry to hear about your device. You can easily schedule an"
+            " appointment at your nearest Genius Bar directly at"
+            " apple.co/geniusbar to have a technician inspect it."
+        )
+    else:
+      # Brand security policy mandates DM escalation for account locks, billing disputes, and physical hardware triage
+      mandatory_escalate_intents = {
+          IntentEnum.ACCOUNT_SECURITY,
+          IntentEnum.BILLING_SUBSCRIPTION,
+          IntentEnum.HARDWARE_PHYSICAL,
+      }
+      if (
+          result.intent in mandatory_escalate_intents
+          and result.routing != RoutingDecision.ESCALATE
+      ):
+        result.action_type = ActionType.DIAGNOSTIC_DM_ESCALATION
+        result.routing = RoutingDecision.ESCALATE
+        result.escalation_reason = (
+            f"Brand Policy Override: {result.intent.value} requires secure DM"
+            " routing."
+        )
 
     # Guardrail B: Confidence Threshold Fallback
     if result.confidence_score < self.confidence_threshold:
@@ -158,6 +197,7 @@ Apple Support: "{match['resolved_reply'][:140]}"
       result.escalation_reason = None
 
     return result
+
 
 
 if __name__ == "__main__":

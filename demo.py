@@ -41,6 +41,7 @@ def display_agent_result(query: str, decision, retrieval_matches: list[dict]):
 
   print("\n[2. CLASSIFICATION & CONFIDENCE]:")
   print(f"  • Detected Intent:   {decision.intent.value}")
+  print(f"  • Action Type:       {decision.action_type.value}")
   print(f"  • Model Confidence:  {decision.confidence_score * 100:.1f}%")
 
   print("\n[3. ROUTING & OPERATIONAL RATIONALE]:")
